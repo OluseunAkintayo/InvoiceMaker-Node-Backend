@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 export interface IUser {
   display_name?: string;
   username: string;
@@ -21,6 +23,16 @@ export interface ILoginResponse {
   }
 }
 
+export interface IProfile {
+  user_id: ObjectId;
+  org_name: string;
+  org_address: string;
+  org_email: string;
+  org_phone: string;
+  created_at: string;
+  org_logo: string;
+}
+
 export interface IInvoiceItem {
   description: string;
   quantity: string;
@@ -29,7 +41,7 @@ export interface IInvoiceItem {
 }
 
 export interface IInvoiceFields {
-  _id: string;
+  _id?: ObjectId;
   logo?: string;
   invoice_number: string;
   biller_name: string;
@@ -48,4 +60,6 @@ export interface IInvoiceFields {
   due_balance?: number;
   currency: string;
   notes?: string;
+  status: string;
+  created_by: ObjectId;
 }

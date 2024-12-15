@@ -12,10 +12,9 @@ const db_name = 'invoicemaker';
 
 let db: Db | null = null;
 
-const main = async (): Promise<void> => {
+const connect_db = async (): Promise<void> => {
   await client.connect();
-  console.log("connection complete");
   db = client.db(db_name);
 };
 
-export { main, db }
+export { connect_db, db, client }

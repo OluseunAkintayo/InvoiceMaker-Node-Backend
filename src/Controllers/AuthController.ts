@@ -1,18 +1,18 @@
 import { Request, Response, Router } from "express";
 import bcrypt from 'bcrypt';
-import { ILoginResponse, IUser, IUserDto } from "../lib/types";
+import { ILoginResponse, IUserDto } from "../lib/types";
 import { db } from '../db';
 import jsonwebtoken from 'jsonwebtoken';
 import dayjs from "dayjs";
 import nodemailer from 'nodemailer';
-import UserSchema from "../Models/User";
+import { collections } from "../db/collections";
+
 
 const AuthController = Router();
 
-
 AuthController.post("/signup", async (req: Request, res: Response) => {
   const userDto: IUserDto = req.body;
-  const users = db?.collection("users");
+  const users = db?.collection(collections.users);
   const duplicate_user = await users?.findOne({ email: userDto.email });
   if (duplicate_user) {
     res.status(400).json({
@@ -34,10 +34,6 @@ AuthController.post("/signup", async (req: Request, res: Response) => {
     modifed_at: null
   }
 
-  // const validateSchema = await UserSchema.validate(user_to_insert);
-
-  // res.json({ schema_result: validateSchema });
-
   const user = await users?.insertOne(user_to_insert);
   res.status(201).json({
     success: true,
@@ -49,15 +45,15 @@ AuthController.post("/signup", async (req: Request, res: Response) => {
 
 AuthController.post("/login", async (req: Request, res: Response) => {
   const userDto = req.body as IUserDto;
-  const users = db?.collection("users");
+  const users = db?.collection(collections.users);
   const user = await users?.findOne({ email: userDto.email });
   if (user) {
     if (await bcrypt.compare(userDto.passcode, user.passcode)) {
       const { _id, email } = user;
       const token = jsonwebtoken.sign(
-        { id: _id, email },
+        { id: _id.toString(), email, exp: Date.parse(dayjs().add(1, 'hour').toISOString()) },
         process?.env?.CRYPTO_KEY!,
-        { algorithm: 'HS512', expiresIn: '1h' },
+        { algorithm: 'HS512' },
       );
       const data: ILoginResponse = {
         access_token: token,
@@ -78,10 +74,10 @@ AuthController.post("/login", async (req: Request, res: Response) => {
   });
 });
 
-// to be continued
+// password reset module - to be continued when email service is set up
 AuthController.get("/get-otp", async (req: Request, res: Response) => {
   const email = req.query.email;
-  const users = db?.collection("users");
+  const users = db?.collection(collections.users);
   if (email) {
     const user = await users?.findOne({ email: email });
     const transporter = nodemailer.createTransport({

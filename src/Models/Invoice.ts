@@ -11,7 +11,7 @@ const InvoiceSchema = object({
   invoice_items: array().of(
     object({
       description: string().required('Required'),
-      quamtity: string().required('Required'),
+      quantity: string().required('Required'),
       rate: string().required('Required')
     })
   ),
@@ -24,8 +24,10 @@ const InvoiceSchema = object({
   due_balance: number(),
   currency: string().required('Required'),
   notes: string(),
+  status: string().oneOf(["pending", "settled"], "Invalid status value").required('Required'),
   created_at: string().required('Required'),
   modifed_at: string(),
+  created_by: string()
 });
 
 export default InvoiceSchema;
