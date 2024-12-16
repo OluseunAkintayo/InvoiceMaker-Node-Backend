@@ -6,6 +6,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import dayjs from "dayjs";
 import nodemailer from 'nodemailer';
 import { collections } from "../db/collections";
+import { checkToken, RequestExt } from "../lib/checkToken";
 
 
 const AuthController = Router();
@@ -46,32 +47,42 @@ AuthController.post("/signup", async (req: Request, res: Response) => {
 AuthController.post("/login", async (req: Request, res: Response) => {
   const userDto = req.body as IUserDto;
   const users = db?.collection(collections.users);
-  const user = await users?.findOne({ email: userDto.email });
-  if (user) {
-    if (await bcrypt.compare(userDto.passcode, user.passcode)) {
-      const { _id, email } = user;
-      const token = jsonwebtoken.sign(
-        { id: _id.toString(), email, exp: Date.parse(dayjs().add(1, 'hour').toISOString()) },
-        process?.env?.CRYPTO_KEY!,
-        { algorithm: 'HS512' },
-      );
-      const data: ILoginResponse = {
-        access_token: token,
-        expiration: dayjs().add(1, 'hour').toISOString(),
-        user: {
-          id: _id.toString(),
+  try {
+    const user = await users?.findOne({ email: userDto.email });
+    if (user) {
+      if (await bcrypt.compare(userDto.passcode, user.passcode)) {
+        const { _id, email } = user;
+        const token = jsonwebtoken.sign(
+          { id: _id.toString(), email, exp: Date.parse(dayjs().add(1, 'hour').toISOString()) },
+          process?.env?.CRYPTO_KEY!,
+          { algorithm: 'HS512' },
+        );
+        const data: ILoginResponse = {
+          access_token: token,
+          expiration: dayjs().add(1, 'hour').toISOString(),
+          user: {
+            id: _id.toString(),
+            email: user.email
+          }
         }
+        res.status(200).json({ success: true, ...data });
+      } else {
+        res.status(400).json({ success: false, message: "Email or password is incorrect" });
       }
-      res.status(200).json({ data });
-    } else {
-      res.json({ success: false, message: "Email or password is incorrect" });
+      return;
     }
-    return;
+    res.status(400).json({
+      success: false,
+      message: "Email or password is incorrect"
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error });
   }
-  res.status(400).json({
-    success: false,
-    message: "Email or password is incorrect"
-  });
+});
+
+AuthController.post("/logout", checkToken, async (req: Request, res: Response) => {
+  const token = req.headers.authorization;
+  res.status(200).json({ token })
 });
 
 // password reset module - to be continued when email service is set up

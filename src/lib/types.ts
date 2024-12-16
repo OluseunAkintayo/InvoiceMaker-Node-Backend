@@ -18,8 +18,8 @@ export interface ILoginResponse {
   access_token: string;
   expiration: string;
   user: {
-    display_name?: string;
     id: string;
+    email: string;
   }
 }
 

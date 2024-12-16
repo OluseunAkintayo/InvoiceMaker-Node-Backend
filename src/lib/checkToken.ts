@@ -8,7 +8,7 @@ export interface RequestExt extends Request {
     email: string;
     exp: number;
     iat: number;
-  }
+  } | null;
 }
 
 
@@ -31,14 +31,16 @@ export const check: RequestHandler = async (req, res, next) => {
       return;
     }
     res.status(401).json({ status: 0, message: "Unauthorized access: token not found" });
+    return;
   }
+  res.status(401).json({ status: 0, message: "Unauthorized access: token not found" });
 }
 
 
 export const checkToken: RequestHandler = (req, res, next) => {
   check(req, res, () => {
     const user = (req as RequestExt).user;
-    if (user.id) return next();
+    if (user?.id) return next();
     res.status(403).json({
       success: false,
       message: "Unauthorized access: provided token not valid for specified user"
