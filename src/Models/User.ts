@@ -5,8 +5,8 @@ const UserSchema = object({
   username: string().required('Required'),
   email: string().email().required('Required'),
   passcode: string().required('Required'),
-  created_at: string().required('Required'),
-  modifed_at: string().nullable(),
+  createdAt: string().required('Required'),
+  modifedAt: string().nullable(),
 });
 
 export default UserSchema;

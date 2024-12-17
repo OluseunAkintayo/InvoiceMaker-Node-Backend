@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, RequestHandler } from 'express';
 import dayjs from 'dayjs';
+import { redis } from './redis';
 
 export interface RequestExt extends Request {
   user: {
@@ -11,16 +12,20 @@ export interface RequestExt extends Request {
   } | null;
 }
 
-
 export const check: RequestHandler = async (req, res, next) => {
   const authToken = req.headers.authorization;
   if (authToken) {
     const token = authToken.split(' ')[1];
+    const is_invalid = await redis.get(token);
+    if (is_invalid) {
+      res.status(401).json({ success: false, message: "Token invalid" });
+      return;
+    }
     if (process.env.CRYPTO_KEY) {
       try {
-        const token_res = await jwt.verify(token, process.env.CRYPTO_KEY) as { id: string; email: string; exp: number, iat: number };
+        const token_res = jwt.verify(token, process.env.CRYPTO_KEY) as { id: string; email: string; exp: number, iat: number };
         if (dayjs(token_res.exp) <= dayjs()) {
-          res.status(401).json({ status: 0, message: "Token expired" });
+          res.status(401).json({ success: false, message: "Token expired" });
           return;
         }
         (req as RequestExt).user = token_res;

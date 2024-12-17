@@ -13,10 +13,10 @@ import { connect_db, client } from './db';
 import IndexController from './Controllers';
 import deleteOldItems from './cron';
 
-
 connect_db().then(() => console.log("DB Connected!"));
 
 // deleteOldItems();
+
 
 const logStream = fs.createWriteStream(path.join(__dirname, 'logs', 'invoicemaker.log'), { flags: 'a' });
 server.use(morgan('common', { stream: logStream }));

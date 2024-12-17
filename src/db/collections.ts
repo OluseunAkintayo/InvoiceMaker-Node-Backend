@@ -1,7 +1,10 @@
+import { db } from ".";
+
 enum collection {
   invoices = "invoices",
   deleted_invoices = "deleted_invoices",
-  users = "users"
+  users = "users",
+  reset = "reset"
 }
 
 export const collections = {
@@ -9,3 +12,8 @@ export const collections = {
   deleted_invoices: collection.deleted_invoices,
   users: collection.users
 }
+
+export const getCollection = (collectionName: string) => {
+  if (!db) throw new Error("Database not connected");
+  return db.collection(collectionName);
+};

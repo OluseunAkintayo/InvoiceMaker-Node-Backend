@@ -1,12 +1,12 @@
-import { ObjectId } from "mongodb";
+import { InsertOneResult, ObjectId } from "mongodb";
 
 export interface IUser {
   display_name?: string;
   username: string;
   email: string;
   passcode: string;
-  created_at: string;
-  modifed_at?: string;
+  createdAt: string;
+  modifedAt?: string;
 }
 
 export interface IUserDto {
@@ -29,7 +29,7 @@ export interface IProfile {
   org_address: string;
   org_email: string;
   org_phone: string;
-  created_at: string;
+  createdAt: string;
   org_logo: string;
 }
 
@@ -43,23 +43,40 @@ export interface IInvoiceItem {
 export interface IInvoiceFields {
   _id?: ObjectId;
   logo?: string;
-  invoice_number: string;
-  biller_name: string;
-  biller_address: string;
-  biller_email: string;
-  customer_name: string;
-  customer_address?: string;
-  customer_email?: string;
-  invoice_items: Array<IInvoiceItem>;
-  bill_date: Date;
-  due_date: Date;
+  invoiceNumber: string;
+  billerName: string;
+  billerAddress: string;
+  billerEmail: string;
+  customerName: string;
+  customerAddress?: string;
+  customerEmail?: string;
+  invoiceItems: Array<IInvoiceItem>;
+  billDate: Date;
+  dueDate: Date;
   tax: number;
   shipping?: number;
   discount: number;
-  amount_paid?: number;
-  due_balance?: number;
+  amountPaid?: number;
+  dueBalance?: number;
   currency: string;
   notes?: string;
   status: string;
-  created_by: ObjectId;
+  createdBy: ObjectId;
 }
+
+export interface IAuthService {
+  signup(userDto: IUserDto): Promise<{
+    success: boolean;
+    message: string;
+    data?: InsertOneResult<Document>;
+  }>;
+
+  login(arg0: IUserDto): Promise<{
+    success: boolean;
+    data?: ILoginResponse;
+    message?: string;
+    error?: unknown;
+  }>;
+}
+
+
