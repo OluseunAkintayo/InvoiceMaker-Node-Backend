@@ -1,7 +1,14 @@
 import dayjs from "dayjs";
 import { collections, getCollection } from "../db/collections";
-import { IInvoiceFields } from "../lib/types";
-import { ObjectId } from "mongodb";
+import { IInvoiceFields, IInvoiceResponse, IRecentInvoices } from "../lib/types";
+import { ObjectId, WithId } from "mongodb";
+
+interface ServiceResponse {
+  success: boolean;
+  data?: unknown;
+  error?: unknown;
+  message?: string;
+}
 
 class InvoiceService {
   async create(invoice: IInvoiceFields) {
@@ -14,23 +21,34 @@ class InvoiceService {
     }
   }
 
-  async list(user_id: ObjectId) {
+  async listAll(): Promise<ServiceResponse> {
     try {
-      const invoices = await getCollection(collections.invoices).find({ createdBy: user_id }).toArray();
+      const invoices = await getCollection(collections.invoices).find().toArray();
+      return { success: true, data: invoices };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+
+  async list(user_id: ObjectId): Promise<{ success: boolean, data?: Array<WithId<IInvoiceResponse>>, error?: unknown }> {
+    try {
+      const invoices = await getCollection(collections.invoices).find({ created_by: user_id }).toArray();
       const invoices_modified = invoices?.map((item) => {
-        const { invoiceNumber, customerName, invoiceItems, createdAt, dueDate, status, currency, } = item;
+        const { invoice_number, customer_name, invoice_items, created_at, due_date, status, currency, } = item;
         return {
           _id: item._id,
-          invoiceNumber: invoiceNumber,
-          customerName: customerName,
-          itemsCount: invoiceItems?.length,
-          invoiceTotal: invoiceItems.reduce((totals: number, invoice_item: { quantity: string; rate: string; }) => {
+          invoice_number: invoice_number,
+          customer_name: customer_name,
+          items_count: invoice_items?.length,
+          invoice_total: invoice_items.reduce((totals: number, invoice_item: { quantity: string; rate: string; }) => {
             const qty = Number(invoice_item.quantity);
             const rate = Number(invoice_item.rate);
             return totals + qty * rate;
           }, 0).toLocaleString(),
           status, currency,
-          createdAt, dueDate
+          created_at: dayjs(created_at).format("D MMM YYYY"),
+          due_date
         }
       });
       return { success: true, data: invoices_modified };
@@ -39,22 +57,22 @@ class InvoiceService {
     }
   }
 
-  async listRecent(user_id: ObjectId) {
+  async listRecent(user_id: ObjectId): Promise<{ success: boolean, data?: Array<WithId<IRecentInvoices>>, error?: unknown }> {
     try {
-      const invoices = await getCollection(collections.invoices).find({ createdBy: user_id }).sort({ createdAt: -1 }).limit(5).toArray();
+      const invoices = await getCollection(collections.invoices).find({ created_by: user_id }).sort({ created_at: -1 }).limit(5).toArray();
       const invoices_modified = invoices?.map((item) => {
-        const { invoiceNumber, customerName, invoiceItems, status, createdAt, currency } = item;
+        const { invoice_number, customer_name, invoice_items, status, created_at, currency } = item;
         return {
           _id: item._id,
-          invoiceNumber: invoiceNumber,
-          customerName: customerName,
-          invoiceTotal: invoiceItems.reduce((totals: number, invoice_item: { quantity: string; rate: string; }) => {
+          invoice_number: invoice_number,
+          customer_name: customer_name,
+          invoice_total: invoice_items.reduce((totals: number, invoice_item: { quantity: string; rate: string; }) => {
             const qty = Number(invoice_item.quantity);
             const rate = Number(invoice_item.rate);
             return totals + qty * rate;
           }, 0).toLocaleString(),
           status, currency,
-          createdAt: dayjs(createdAt).format("D MMM YYYY")
+          created_at: dayjs(created_at).format("D MMM YYYY")
         }
       });
       return { success: true, data: invoices_modified };
@@ -63,10 +81,10 @@ class InvoiceService {
     }
   }
 
-  async view({ user_id, invoice_id }: { user_id: ObjectId, invoice_id: ObjectId }) {
+  async view({ user_id, invoice_id }: { user_id: ObjectId, invoice_id: ObjectId }): Promise<ServiceResponse> {
     try {
       const invoice = await getCollection(collections.invoices).findOne({ _id: invoice_id }) as IInvoiceFields;
-      if (user_id.toString() !== invoice.createdBy.toString()) {
+      if (user_id.toString() !== invoice.created_by.toString()) {
         return { success: false, message: "User is not permitted to view this invoice" };
       }
       return { success: true, data: invoice };
@@ -86,7 +104,7 @@ class InvoiceService {
       return { success: false, message: "Invoice not found" };
     }
 
-    if (user_id.toString() !== invoice.createdBy.toString()) {
+    if (user_id.toString() !== invoice.created_by.toString()) {
       return { success: false, message: "Invoice cannot be modified by this user" };
     }
 
@@ -112,7 +130,7 @@ class InvoiceService {
       return { success: false, message: "Invoice not found" };
     }
 
-    if (user_id.toString() !== found_invoice.createdBy.toString()) {
+    if (user_id.toString() !== found_invoice.created_by.toString()) {
       return { success: false, message: "Operation not permitted: user cannot delete this invoice" };
     }
 
@@ -128,7 +146,7 @@ class InvoiceService {
   async listDeleted(user_id: ObjectId) {
     if (!user_id) return { success: false, message: "User not found" };
     try {
-      const invoices = await getCollection(collections.deleted_invoices).find({ createdBy: user_id }).toArray();
+      const invoices = await getCollection(collections.deleted_invoices).find({ created_by: user_id }).toArray();
       if (invoices) {
         return { success: true, data: invoices };
       }
@@ -143,7 +161,7 @@ class InvoiceService {
     if (!found_invoice) {
       return { success: false, message: "Invoice not found" };
     }
-    if (user_id.toString() !== found_invoice.createdBy.toString()) {
+    if (user_id.toString() !== found_invoice.created_by.toString()) {
       return { success: false, message: "Operation not permitted: user cannot restore this invoice" };
     }
 

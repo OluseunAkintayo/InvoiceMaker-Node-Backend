@@ -21,7 +21,7 @@ class AuthService implements IAuthService {
       }
     }
 
-    const salt_rounds = 16;
+    const salt_rounds = 12;
     const salt = await bcrypt.genSalt(salt_rounds);
     const hashed_password = await bcrypt.hash(userDto.passcode, salt);
     const user_to_insert = {
@@ -29,7 +29,7 @@ class AuthService implements IAuthService {
       username: userDto.email,
       email: userDto.email,
       passcode: hashed_password,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       modifedAt: null
     }
     try {

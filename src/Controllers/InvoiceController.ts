@@ -1,10 +1,9 @@
-import { Request, response, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import validate from "../lib/validate";
 import InvoiceSchema from "../Models/Invoice";
 import { IInvoiceFields } from "../lib/types";
 import { ObjectId } from "mongodb";
 import { checkToken, RequestExt } from "../lib/checkToken";
-import { collections, getCollection } from "../db/collections";
 import InvoiceService from "../Services/InvoiceService";
 
 const getUserId = (req: Request): ObjectId => {
@@ -24,7 +23,7 @@ InvoiceController.post("/create", checkToken, validate(InvoiceSchema), async (re
   }
   const invoice: IInvoiceFields = {
     ...req.body,
-    createdBy: user_id
+    created_by: user_id
   };
 
   try {
@@ -34,6 +33,21 @@ InvoiceController.post("/create", checkToken, validate(InvoiceSchema), async (re
       return;
     }
     res.status(400).json({ success: false, message: "Error creating invoice" });
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
+
+InvoiceController.get("/list-all", async (req: Request, res: Response) => {
+  try {
+    const response = await invoiceService.listAll();
+    console.log(response)
+    if (response?.success) {
+      res.status(200).json(response);
+      return;
+    }
+    res.status(400).json(response);
   } catch (error) {
     res.status(500).json(error);
   }

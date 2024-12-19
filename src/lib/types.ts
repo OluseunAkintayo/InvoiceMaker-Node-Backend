@@ -5,7 +5,7 @@ export interface IUser {
   username: string;
   email: string;
   passcode: string;
-  createdAt: string;
+  created_at: string;
   modifedAt?: string;
 }
 
@@ -29,7 +29,7 @@ export interface IProfile {
   org_address: string;
   org_email: string;
   org_phone: string;
-  createdAt: string;
+  created_at: string;
   org_logo: string;
 }
 
@@ -43,26 +43,40 @@ export interface IInvoiceItem {
 export interface IInvoiceFields {
   _id?: ObjectId;
   logo?: string;
-  invoiceNumber: string;
-  billerName: string;
-  billerAddress: string;
-  billerEmail: string;
-  customerName: string;
-  customerAddress?: string;
-  customerEmail?: string;
-  invoiceItems: Array<IInvoiceItem>;
-  billDate: Date;
-  dueDate: Date;
+  invoice_number: string;
+  biller_name: string;
+  biller_address: string;
+  biller_email: string;
+  customer_name: string;
+  customer_address?: string;
+  customer_email?: string;
+  invoice_items: Array<IInvoiceItem>;
+  bill_date: Date;
+  due_date: Date;
   tax: number;
   shipping?: number;
   discount: number;
-  amountPaid?: number;
-  dueBalance?: number;
+  amount_paid?: number;
+  due_balance?: number;
   currency: string;
   notes?: string;
   status: string;
-  createdBy: ObjectId;
+  created_by: ObjectId;
 }
+
+export interface IInvoiceResponse {
+  _id: ObjectId;
+  invoice_number: string;
+  customer_name: string;
+  items_count: number;
+  invoice_total: string;
+  status: string;
+  currency: string;
+  created_at: string;
+  due_date?: string;
+}
+
+export type IRecentInvoices = Omit<IInvoiceResponse, "items_count" | "due_date">
 
 export interface IAuthService {
   signup(userDto: IUserDto): Promise<{
