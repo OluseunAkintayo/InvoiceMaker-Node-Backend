@@ -100,11 +100,12 @@ InvoiceController.get("/view/:id", checkToken, async (req: Request, res: Respons
 });
 
 
-InvoiceController.patch("/:id/settle", checkToken, async (req: Request, res: Response) => {
+InvoiceController.patch("/settle", checkToken, async (req: Request, res: Response) => {
   const user_id = getUserId(req);
-  const invoice_id = new ObjectId(req.params.id);
+  const invoice_id = new ObjectId(req.query.id as string);
+  const status = req.query.status as string;
   try {
-    const response = await invoiceService.settle({ user_id, invoice_id });
+    const response = await invoiceService.settle({ user_id, invoice_id, status });
     if (response.success) {
       res.status(200).json(response);
       return;
@@ -116,8 +117,8 @@ InvoiceController.patch("/:id/settle", checkToken, async (req: Request, res: Res
 });
 
 
-InvoiceController.delete("/:id/delete", checkToken, async (req: Request, res: Response) => {
-  const invoice_id = new ObjectId(req.params.id);
+InvoiceController.delete("/delete", checkToken, async (req: Request, res: Response) => {
+  const invoice_id = new ObjectId(req.query.id as string);
   const user_id = getUserId(req);
   try {
     const response = await invoiceService.delete({ user_id, invoice_id });

@@ -27,7 +27,8 @@ const InvoiceSchema = object({
   status: string().oneOf(["pending", "settled"], "Invalid status value").required('Required'),
   created_at: string().required('Required'),
   modifed_at: string(),
-  created_by: string()
+  created_by: string(),
+  deleted_at: string()
 });
 
 export default InvoiceSchema;

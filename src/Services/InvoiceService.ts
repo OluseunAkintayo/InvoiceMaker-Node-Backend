@@ -93,9 +93,10 @@ class InvoiceService {
     }
   }
 
-  async settle({ user_id, invoice_id }: { user_id: ObjectId, invoice_id: ObjectId }) {
+  async settle({ user_id, invoice_id, status }: { user_id: ObjectId, invoice_id: ObjectId, status: string }) {
     const invoice = await getCollection(collections.invoices).findOne({ _id: invoice_id }) as IInvoiceFields;
     const user = await getCollection(collections.users).findOne({ _id: user_id });
+    console.log({status});
     if (!user) {
       return { success: false, message: "User not found" };
     }
@@ -113,7 +114,7 @@ class InvoiceService {
         { _id: invoice_id },
         {
           $set: {
-            status: 'settled',
+            status: status,
             modified_at: new Date().toISOString()
           }
         }
@@ -135,7 +136,8 @@ class InvoiceService {
     }
 
     try {
-      await getCollection(collections.deleted_invoices).insertOne(found_invoice);
+      const new_invoice = {...found_invoice, deleted_at: new Date().toISOString()};
+      await getCollection(collections.deleted_invoices).insertOne(new_invoice);
       await getCollection(collections.invoices).deleteOne({ _id: invoice_id });
       return { success: true, message: "Invoice deleted suceessfully" };
     } catch (error) {
@@ -146,7 +148,22 @@ class InvoiceService {
   async listDeleted(user_id: ObjectId) {
     if (!user_id) return { success: false, message: "User not found" };
     try {
-      const invoices = await getCollection(collections.deleted_invoices).find({ created_by: user_id }).toArray();
+      const invoices = (await getCollection(collections.deleted_invoices).find({ created_by: user_id }).toArray()).map((item) => {
+        const { invoice_number, customer_name, invoice_items, status, created_at, currency, deleted_at } = item;
+        return {
+          _id: item._id,
+          invoice_number: invoice_number,
+          customer_name: customer_name,
+          invoice_total: invoice_items.reduce((totals: number, invoice_item: { quantity: string; rate: string; }) => {
+            const qty = Number(invoice_item.quantity);
+            const rate = Number(invoice_item.rate);
+            return totals + qty * rate;
+          }, 0).toLocaleString(),
+          status, currency,
+          created_at: dayjs(created_at).format("D MMM YYYY"),
+          deleted_at: dayjs(deleted_at).format("D MMM YYYY h:mm A")
+        }
+      });
       if (invoices) {
         return { success: true, data: invoices };
       }
@@ -171,6 +188,24 @@ class InvoiceService {
       return { success: true, message: "Invoice restored suceessfully" };
     } catch (error) {
       return { success: false, error }
+    }
+  }
+
+  async deletePermanently({ user_id, invoice_id }: { user_id: ObjectId, invoice_id: ObjectId }) {
+    const found_invoice = await getCollection(collections.deleted_invoices).findOne({ _id: invoice_id }) as IInvoiceFields;
+    if (!found_invoice) {
+      return { success: false, message: "Invoice not found" };
+    }
+
+    if (user_id.toString() !== found_invoice.created_by.toString()) {
+      return { success: false, message: "Operation not permitted: user cannot delete this invoice" };
+    }
+
+    try {
+      await getCollection(collections.deleted_invoices).deleteOne({ _id: invoice_id });
+      return { success: true, message: "Invoice deleted suceessfully" };
+    } catch (error) {
+      return { success: false, error };
     }
   }
 }

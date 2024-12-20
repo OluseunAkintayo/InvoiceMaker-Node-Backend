@@ -62,7 +62,7 @@ class AuthService implements IAuthService {
           );
           const data: ILoginResponse = {
             access_token: token,
-            expiration: dayjs().add(1, 'hour').toISOString(),
+            expiration: dayjs().add(1, 'day').toISOString(),
             user: {
               id: _id.toString(),
               email: user.email

@@ -62,6 +62,7 @@ export interface IInvoiceFields {
   notes?: string;
   status: string;
   created_by: ObjectId;
+  deleted_at?: string;
 }
 
 export interface IInvoiceResponse {
