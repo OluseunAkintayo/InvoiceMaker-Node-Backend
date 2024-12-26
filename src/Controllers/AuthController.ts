@@ -21,6 +21,23 @@ AuthController.post("/signup", async (req: Request, res: Response) => {
 });
 
 
+AuthController.post("/signup/google", async (req: Request, res: Response) => {
+  const credentials = req.query.cred as string;
+  const response = await authService.googleAuth(credentials);
+  res.status(200).json(response);
+  // try {
+  //   const response = await authService.signup(userDto);
+  //   if (response.success) {
+  //     res.status(200).json(response);
+  //     return
+  //   }
+  //   res.status(400).json(response);
+  // } catch (error) {
+  //   res.status(500).json({ success: false, error });
+  // }
+});
+
+
 AuthController.post("/login", async (req: Request, res: Response) => {
   const userDto = req.body as IUserDto;
   try {

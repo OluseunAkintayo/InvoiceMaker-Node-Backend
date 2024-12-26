@@ -1,14 +1,5 @@
 import { InsertOneResult, ObjectId } from "mongodb";
 
-export interface IUser {
-  display_name?: string;
-  username: string;
-  email: string;
-  passcode: string;
-  created_at: string;
-  modifedAt?: string;
-}
-
 export interface IUserDto {
   email: string,
   passcode: string,
@@ -20,6 +11,7 @@ export interface ILoginResponse {
   user: {
     id: string;
     email: string;
+    picture?: string;
   }
 }
 
@@ -94,4 +86,8 @@ export interface IAuthService {
   }>;
 }
 
-
+export interface IGoogleUser {
+  email: string;
+  picture: string;
+  name: string;
+}
